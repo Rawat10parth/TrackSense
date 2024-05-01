@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background-color: #cfe7f8;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            align-items: center;
+            display: block;
+            justify-content: center;
+
+        }
+
+        .track-note {
+            height: 50px;
+            width: 700px;
+            background-color: white;
+            margin: 20px 20px 20px 380px;
+            border-radius: 20px;
+            box-shadow: 5px 10px #b5b3b3;
+            text-align: center;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            /* Smooth transition */
+        }
+
+        .track-note.highlight {
+            background-color: #ffff99;
+            /* Yellow highlight */
+        }
+
+        button {
+            background-color: #359cf0;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .logout {
+            background-color: #359cf0;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .title {
+            height: 50px;
+            width: 700px;
+            background-color: rgb(59, 140, 240);
+            margin: 20px 20px 20px 420px;
+            border-radius: 10px;
+            box-shadow: 5px 10px #b5b3b3;
+            text-align: center;
+            align-items: center;
+            display: flex;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .search-input {
+            height: 20px;
+            border-radius: 20px;
+            margin-top: 20px;
+            position: absolute;
+            top: 10px;
+            right: 80px;
+            padding: 5px 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            outline: none;
+        }
+    </style>
+    <title>Dashboard</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+
+<body>
+
+    <h1>Welcome to Your Dashboard!</h1>
+    <div class="title">
+        <p> The Total Time Spent on each Application:</p>
+    </div>
+    <div>
+        <ul id="app-usage-list">
+            <!-- Application usage data will be filled here by JavaScript -->
+        </ul>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+
+    <!-- Button to clear logs and delete all app_usage table data -->
+    <button id="clear-logs-btn">Clear Logs</button>
+
+    <!-- Button to view statistics -->
+    <a href="{{ url_for('statistics') }}"><button>View Statistics</button></a>
+
+    <!-- Button to set alarm -->
+    <a href="{{ url_for('set_limit') }}"><button>Set Alarm</button></a>
+
+    <input type="text" class="search-input" placeholder="Search">
+
+    <script>
+        function fetchAppUsage() {
+            $.ajax({
+                url: "/api/app-usage",
+                type: "GET",
+                success: function (data) {
+                    var list = $("#app-usage-list");
+                    list.empty(); // Clear the list before appending new data
+                    $.each(data, function (app, duration) {
+                        var listItem = $("<li>", {
+                            "class": "track-note",
+                            "text": app + ": " + duration + " seconds"
+                        });
+                        list.append(listItem);
+
+                        // Filter based on search input
+                        var searchInput = $(".search-input").val().toLowerCase();
+                        if (searchInput !== "" && app.toLowerCase().includes(searchInput)) {
+                            listItem.addClass("highlight");
+                        }
+                    });
+                }
+            });
+        }
+
+        // Function to handle clearing logs
+        $("#clear-logs-btn").click(function () {
+            $.ajax({
+                url: "/delete-app-usage-data",
+                type: "POST",
+                success: function (response) {
+                    alert(response); // Show success message
+                    fetchAppUsage(); // Fetch updated app usage data
+                }
+            });
+        });
+
+        // Fetch app usage data every 5 seconds
+        setInterval(fetchAppUsage, 5000);
+
+        // Also fetch immediately on page load
+        fetchAppUsage();
+
+        // Event listener for search input
+        $(".search-input").on("input", function () {
+            var searchInput = $(this).val().toLowerCase();
+            $("#app-usage-list").children().each(function () {
+                var appText = $(this).text().toLowerCase();
+                if (searchInput !== "" && appText.includes(searchInput)) {
+                    $(this).addClass("highlight");
+                } else {
+                    $(this).removeClass("highlight");
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
